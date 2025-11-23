@@ -58,41 +58,10 @@ export class RecipeSearch {
 
     console.log('[RecipeSearch] Received images:', imgs);
 
-    // Convert image URLs to base64 before passing to Agent
-    let imageBase64Array: string[] | undefined = undefined;
-    if (imgs && imgs.length > 0) {
-      console.log('[RecipeSearch] Converting images to base64...');
-      imageBase64Array = await Promise.all(
-        imgs.map(async (imgUrl, index) => {
-          console.log(`[RecipeSearch] Processing image ${index}:`, imgUrl.substring(0, 100));
-
-          // Check if it's already a base64 data URL
-          if (imgUrl.startsWith('data:')) {
-            console.log(`[RecipeSearch] Image ${index} is already a data URL`);
-            return imgUrl;
-          }
-
-          // Fetch the image and convert to base64
-          try {
-            console.log(`[RecipeSearch] Fetching image ${index} from URL...`);
-            const response = await fetch(imgUrl);
-            const blob = await response.blob();
-            const base64 = await this.blobToBase64(blob);
-            console.log(`[RecipeSearch] Image ${index} converted, base64 length:`, base64.length);
-            return base64;
-          } catch (error) {
-            console.error(`[RecipeSearch] Failed to convert image ${index} to base64:`, error);
-            throw error;
-          }
-        })
-      );
-      console.log('[RecipeSearch] All images converted, total:', imageBase64Array.length);
-    }
-
-    // Call the real Agent workflow (no fallback - throw errors for debugging)
+    // Call the real Agent workflow - base64 conversion happens in Agent.ts
     const result = await runWorkflow({
       input_as_text: text,
-      images: imageBase64Array // Pass base64 images to the Agent workflow
+      images: imgs // Pass raw image URLs - Agent will handle conversion
     });
 
     // Extract recipes and ingredients from the workflow result
@@ -160,24 +129,6 @@ export class RecipeSearch {
    */
   getDetectedIngredients(): string[] {
     return Array.from(this.detectedIngredients);
-  }
-
-  /**
-   * Convert a Blob to base64 string
-   */
-  private blobToBase64(blob: Blob): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === 'string') {
-          resolve(reader.result);
-        } else {
-          reject(new Error('Failed to convert blob to base64'));
-        }
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
   }
 
   /**

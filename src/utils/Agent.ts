@@ -3,6 +3,9 @@ import type { AgentInputItem } from "@openai/agents";
 import { z } from "zod";
 import OpenAI from "openai";
 
+// Import unified image helper
+import { imageToBase64 } from './ImageHelper.ts';
+
 // Set the OpenAI API key for browser environment
 if (typeof import.meta !== 'undefined' && import.meta.env) {
   // Vite/Browser environment
@@ -371,6 +374,30 @@ type WorkflowInput = {
   images?: string[]; // Array of image URLs or base64 strings
 };
 
+/**
+ * Helper function to create initial content from WorkflowInput
+ * Converts text and images into AgentInputItem content format
+ * Handles conversion of URLs to base64 if needed
+ */
+async function createInitialContent(workflow: WorkflowInput): Promise<Array<{ type: "input_text"; text: string } | { type: "input_image"; image: string }>> {
+  const content: Array<{ type: "input_text"; text: string } | { type: "input_image"; image: string }> = [
+    { type: "input_text", text: workflow.input_as_text }
+  ];
+
+  // Add images if provided
+  if (workflow.images && workflow.images.length > 0) {
+    for (const imageInput of workflow.images) {
+      const imageUrl = await imageToBase64(imageInput);
+      content.push({
+        type: "input_image",
+        image: imageUrl
+      });
+    }
+  }
+
+  return content;
+}
+
 
 // Main code entrypoint
 export const runWorkflow = async (workflow: WorkflowInput) => {
@@ -387,34 +414,11 @@ export const runWorkflow = async (workflow: WorkflowInput) => {
       existing_ingredients_list: []
     };
     // Build initial conversation with text and optional images
-    const initialContent: Array<{ type: "input_text"; text: string } | { type: "input_image"; image_url: string }> = [
-      { type: "input_text", text: workflow.input_as_text }
-    ];
-
-    // Add images if provided (expects base64 data URLs)
-    if (workflow.images && workflow.images.length > 0) {
-      console.log('[Agent] Processing images:', workflow.images.length);
-      workflow.images.forEach((imageDataUrl, index) => {
-        // Ensure it's a proper data URL format (data:image/jpeg;base64,...)
-        const imageUrl = imageDataUrl.startsWith('data:')
-          ? imageDataUrl
-          : `data:image/jpeg;base64,${imageDataUrl}`;
-
-
-        initialContent.push({
-          type: "input_image",
-          image_url: imageUrl
-        });
-      });
-
-      console.log(`[Agent] Msg content:`, initialContent);
-    }
+    const initialContent = await createInitialContent(workflow);
 
     const conversationHistory: AgentInputItem[] = [
       { role: "user", content: initialContent }
     ];
-
-    console.log('[Agent] Conversation history user message:', JSON.stringify(conversationHistory[0], null, 2));
     const runner = new Runner({
       traceMetadata: {
         __trace_source__: "agent-builder",

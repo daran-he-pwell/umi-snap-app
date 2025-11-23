@@ -15,7 +15,10 @@
       "Bash(/dev/null)",
       "Bash(then echo \"Dev server is running on port 5173\")",
       "Bash(else echo \"No dev server detected\")",
-      "Bash(node -e \"import(''@openai/agents'').then(m => console.log(Object.keys(m).filter(k => k.includes(''Input'') || k.includes(''input'')).join(''\\n'')))\")"
+      "Bash(node -e \"import(''@openai/agents'').then(m => console.log(Object.keys(m).filter(k => k.includes(''Input'') || k.includes(''input'')).join(''\\n'')))\")",
+      "Bash(node test-agent-with-images.mjs:*)",
+      "Bash(node -e:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []
