@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.env)",
+      "Bash(chmod:*)",
+      "Bash(if [ -f .env ])",
+      "Bash(then echo \"✅ API key found\")",
+      "Bash(else echo \"⚠️  No API key set. Please add VITE_OPENAI_API_KEY to .env file\")",
+      "Bash(fi)",
+      "Bash(node test-agent.mjs:*)",
+      "Bash(node -e \"import(''@openai/agents'').then(m => console.log(Object.keys(m).filter(k => k.includes(''search'') || k.includes(''Search'')).join(''\\n'')))\")",
+      "Bash(find:*)",
+      "Bash(node test-simple.mjs:*)",
+      "Bash(if lsof -ti:5173)",
+      "Bash(/dev/null)",
+      "Bash(then echo \"Dev server is running on port 5173\")",
+      "Bash(else echo \"No dev server detected\")",
+      "Bash(node -e \"import(''@openai/agents'').then(m => console.log(Object.keys(m).filter(k => k.includes(''Input'') || k.includes(''input'')).join(''\\n'')))\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
